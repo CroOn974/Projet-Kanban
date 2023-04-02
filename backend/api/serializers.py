@@ -7,13 +7,26 @@ class ColonneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Colonne
         fields = ('id_colonne','titre_colonne', 'position_colonne', 'tache')
+        extra_kwargs = {
+            'titre_colonne': {'required': False},
+            
+        }
 
     def get_tache(self, obj):
         return [{'id_tache': tache.id_tache, 'titre_tache': tache.titre_tache, 'position_tache': tache.position_tache} for tache in obj.tache_set.all().order_by('position_tache')]
     
+
 
 class TacheSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tache
         fields = '__all__'
+
+
+class SwitchColonneSerializer(serializers.ModelSerializer):
+    tache = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Colonne
+        fields = ('position_colonne')
