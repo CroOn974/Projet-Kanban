@@ -1,3 +1,5 @@
+var kanban
+
 async function fetchColonnes() {
     // Récupération des colonnes/tache via l'API
     const response = await fetch('http://127.0.0.1:8000/api/colonne/');
@@ -15,7 +17,7 @@ async function fetchColonnes() {
     }));
 
         // Création d'un nouvel objet jKanban avec les données récupérées
-        var kanban = new jKanban({
+        kanban = new jKanban({
             element: '#kanban',
             gutter: '15px',
             widthBoard: '250px',
@@ -75,7 +77,7 @@ async function fetchColonnes() {
         },
 
     );
-
+    
     const listColonnes = document.querySelectorAll(".kanban-title-board");
     listColonnes.forEach(element =>{
 
@@ -88,7 +90,7 @@ async function fetchColonnes() {
         html += '<div class="card-body">';
         html += '<h5 class="card-title">' + titre + '</h5>';
         html += '<div class="d-flex">';
-        html += '<a href="#" class="btn btn-outline-primary" id="'+ element.parentElement.parentElement.getAttribute('data-id')+'" onClick="addTache(this.id)">Add Task</a>';
+        html += '<a href="#" class="btn btn-outline-primary" id="'+ element.parentElement.parentElement.getAttribute('data-id')+'" onClick="addTache(this)">Add Task</a>';
         html += '<a href="#" class="btn btn-outline-danger" id="'+ element.parentElement.parentElement.getAttribute('data-id')+'" onClick="deleteColonne(this.id)">Delete</a>';
         html += '</div>';
         html += '</div>';
@@ -110,7 +112,7 @@ async function fetchColonnes() {
         html += '<p class="card-text"></p>';
         html += '<div class="d-flex">';
         html += '<a href="#" class="btn btn-outline-primary" id="'+ element.getAttribute('data-eid')+'" onClick="prepUpdate(this.parentElement)">Update</a>';
-        html += '<a href="#" class="btn btn-outline-danger" id="'+ element.getAttribute('data-eid')+'" onClick="deleteTask(this.id)">Delete</a>';
+        html += '<a href="#" class="btn btn-outline-danger" id="'+ element.getAttribute('data-eid')+'" onClick="deleteTask(this)">Delete</a>';
         html += '</div>';
         html += '</div>';
        
@@ -168,39 +170,55 @@ async function switchColone(idColonne ,position){
 }
 
 
-
 /**
  * Ajoute un tache 
  * 
- * @param {number} colonneId id la colonne ou l'on ajoute la tache
+ * @param {dom} element id la colonne ou l'on ajoute la tache
  * 
  */
-async function addTache(colonneId){
+async function addTache(element){
     titreTache = prompt('titre de la tache');
+    id = element.getAttribute('id')
 
-    titre = {
+    data = {
         'titre_tache' : titreTache,
         'position_tache' : 0,
-        'id_colonne' : colonneId
+        'id_colonne' : id
     }
+
+    console.log(data);
 
     var response = await fetch('http://localhost:8000/api/tache/',{
         method:'post',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(titre)
-})
+                body: JSON.stringify(data)
+    })
+
+    const responseJson = await response.json();
+    console.log(responseJson);
+
+    newTache = {
+        id : responseJson.id_tache,
+        title : responseJson.titre_tache,
+        position : responseJson.position_tache
+    }
+
+    //kanban.addElement(id, newTache);
 
 }
 
 /**
  * Fonction qui supprime la tache
  * 
- * @param {number} idTache id de la tache a supprimer
+ * @param {dom} element id de la tache a supprimer
  * 
  */
-async function deleteTask(idTache){
+async function deleteTask(element){
+    console.log(element);
+    idTache = element.getAttribute('id')
+    idColonne = element.parentElement.parentElement.parentElement.getAttribute('data-eid')
 
     await fetch('http://localhost:8000/api/tache/'+ idTache,{
                 method:'delete',
@@ -209,6 +227,8 @@ async function deleteTask(idTache){
                 },
                 
     });
+
+    kanban.removeElement(idColonne, idTache);
 }
 
 /**
@@ -282,6 +302,37 @@ async function addColonne(){
                 },
                 body: JSON.stringify(data)
     })
+
+    const responseJson = await response.json();
+    console.log(responseJson);
+
+
+    kanban.addBoards([
+        {
+            id: responseJson.id_colonne,
+            title: responseJson.titre_colonne,
+            
+        }
+    ]);
+
+    element = document.querySelector('.kanban-board[data-id="'+ responseJson.id_colonne +'"]');
+
+    console.log(element);
+
+    element.removeChild(element.firstChild);
+    element.classList.add('card');
+
+    let html = '';
+    html += '<div class="card-body">';
+    html += '<h5 class="card-title">' + responseJson.titre_colonne + '</h5>';
+    html += '<p class="card-text"></p>';
+    html += '<div class="d-flex">';
+    html += '<a href="#" class="btn btn-outline-primary" id="'+ responseJson.id_colonne +'" onClick="prepUpdate(this.parentElement)">Update</a>';
+    html += '<a href="#" class="btn btn-outline-danger" id="'+ responseJson.id_colonne +'" onClick="deleteTask(this)">Delete</a>';
+    html += '</div>';
+    html += '</div>';
+   
+    element.innerHTML += html
 }
 
 /**
@@ -291,16 +342,15 @@ async function addColonne(){
  */
 async function deleteColonne(idColonne){
 
-    await fetch('http://localhost:8000/api/colonne/'+ idColonne,{
-        method:'delete',
-        headers: {
-            'Content-Type': 'application/json'
-    },
-        
-});
+        await fetch('http://localhost:8000/api/colonne/'+ idColonne,{
+            method:'delete',
+            headers: {
+                'Content-Type': 'application/json'
+        },
 
+    });
 
-
+    kanban.removeBoard(idColonne)
 
 }
 

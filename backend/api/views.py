@@ -87,7 +87,7 @@ class TacheViewset(viewsets.ModelViewSet):
 
         nbColonne = instance.id_colonne
         nbTache = Tache.objects.filter(id_colonne = nbColonne).count()
-        instance.position_tache = nbTache - 1
+        instance.position_tache = nbTache
         instance.save()
       
         return Response(serializer.data)
