@@ -92,7 +92,7 @@ class TacheViewset(viewsets.ModelViewSet):
       
         return Response(serializer.data)
 
-    # gére l'update de la tache
+    # Update Tache
     def partial_update(self, request, *args, **kwargs):
 
         partial = kwargs.pop('partial', True)
@@ -148,5 +148,13 @@ class TacheViewset(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-
+    # Delete Tache
+    def perform_destroy(self, instance):
+        # récupérer la position de la tâche à supprimer
+        position = instance.position_tache
+        # supprimer la tâche
+        instance.delete()
+        # décrémenter la position des tâches suivantes
+        Tache.objects.filter(position_tache__gt=position).update(position_tache=F('position_tache') - 1)
+    
         

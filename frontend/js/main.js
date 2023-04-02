@@ -78,6 +78,7 @@ async function fetchColonnes() {
 
     );
     
+    // Mise en forme des colonne
     const listColonnes = document.querySelectorAll(".kanban-title-board");
     listColonnes.forEach(element =>{
 
@@ -99,6 +100,7 @@ async function fetchColonnes() {
 
     });   
 
+    // Mise en forme des taches
     const listTache = document.querySelectorAll(".kanban-item");
     listTache.forEach(element => {
 
@@ -111,7 +113,7 @@ async function fetchColonnes() {
         html += '<h5 class="card-title">' + titre + '</h5>';
         html += '<p class="card-text"></p>';
         html += '<div class="d-flex">';
-        html += '<a href="#" class="btn btn-outline-primary" id="'+ element.getAttribute('data-eid')+'" onClick="prepUpdate(this.parentElement)">Update</a>';
+        html += '<a href="#" class="btn btn-outline-primary" id="'+ element.getAttribute('data-eid')+'" onClick="prepUpdate(this)">Update</a>';
         html += '<a href="#" class="btn btn-outline-danger" id="'+ element.getAttribute('data-eid')+'" onClick="deleteTask(this)">Delete</a>';
         html += '</div>';
         html += '</div>';
@@ -205,7 +207,25 @@ async function addTache(element){
         position : responseJson.position_tache
     }
 
-    //kanban.addElement(id, newTache);
+    kanban.addElement(id, newTache);
+    element = document.querySelector('.kanban-item[data-eid="'+ newTache.id +'"]');
+
+    element.classList.add('card');  
+    titre = element.innerHTML;
+    element.removeChild(element.firstChild);
+
+    let html = '';
+    html += '<div class="card-body">';
+    html += '<h5 class="card-title">' + newTache.title + '</h5>';
+    html += '<p class="card-text"></p>';
+    html += '<div class="d-flex">';
+    html += '<a href="#" class="btn btn-outline-primary" id="'+ newTache.id +'" onClick="prepUpdate(this)">Update</a>';
+    html += '<a href="#" class="btn btn-outline-danger" id="'+ newTache.id +'" onClick="deleteTask(this)">Delete</a>';
+    html += '</div>';
+    html += '</div>';
+   
+    element.innerHTML += html
+
 
 }
 
@@ -238,15 +258,14 @@ async function deleteTask(element){
  * 
  */
 function prepUpdate(element){
-
-    console.log(element);
-        
+ 
     titreTache = prompt('nouveau titre')
+
     if(titreTache != null){
 
-        idTache = parseInt(element.getAttribute('data-eid'))
-        colonne =  parseInt(element.parentElement.parentElement.getAttribute('data-id'))
-        position = parseInt(element.getAttribute('data-position'))
+        idTache = parseInt(element.getAttribute('id'))
+        colonne =  parseInt(element.parentElement.parentElement.parentElement.parentElement.parentElement.getAttribute('data-id'))
+        position = parseInt(element.parentElement.parentElement.parentElement.getAttribute('data-position'))
         updateTask(idTache,titreTache,colonne,position)
     }
 
@@ -269,6 +288,8 @@ async function updateTask(idTache,titreTache,colonne,position){
         'id_colonne' : colonne
     }
 
+    console.log(data);
+
     var response = await fetch('http://localhost:8000/api/tache/'+ idTache + '/',{
         method:'put',
                 headers: {
@@ -276,6 +297,16 @@ async function updateTask(idTache,titreTache,colonne,position){
                 },
                 body: JSON.stringify(data)
     })
+
+
+    const tache = await response.json();
+
+    // Remplacement de l'élément dans la vue kanban
+    kanban.replaceElement(idTache, {
+        id: tache.id,
+        title: tache.titre_tache,
+        
+    });
 
 }
 
@@ -307,32 +338,32 @@ async function addColonne(){
     console.log(responseJson);
 
 
-    kanban.addBoards([
-        {
-            id: responseJson.id_colonne,
-            title: responseJson.titre_colonne,
+    // kanban.addBoards([
+    //     {
+    //         id: responseJson.id_colonne,
+    //         title: responseJson.titre_colonne,
             
-        }
-    ]);
+    //     }
+    // ]);
 
-    element = document.querySelector('.kanban-board[data-id="'+ responseJson.id_colonne +'"]');
+    // element = document.querySelector('.kanban-board[data-id="'+ responseJson.id_colonne +'"]');
 
-    console.log(element);
+    // console.log(element);
 
-    element.removeChild(element.firstChild);
-    element.classList.add('card');
+    // element.removeChild(element.firstChild);
+    // element.classList.add('card');
 
-    let html = '';
-    html += '<div class="card-body">';
-    html += '<h5 class="card-title">' + responseJson.titre_colonne + '</h5>';
-    html += '<p class="card-text"></p>';
-    html += '<div class="d-flex">';
-    html += '<a href="#" class="btn btn-outline-primary" id="'+ responseJson.id_colonne +'" onClick="prepUpdate(this.parentElement)">Update</a>';
-    html += '<a href="#" class="btn btn-outline-danger" id="'+ responseJson.id_colonne +'" onClick="deleteTask(this)">Delete</a>';
-    html += '</div>';
-    html += '</div>';
+    // let html = '';
+    // html += '<div class="card-body">';
+    // html += '<h5 class="card-title">' + responseJson.titre_colonne + '</h5>';
+    // html += '<p class="card-text"></p>';
+    // html += '<div class="d-flex">';
+    // html += '<a href="#" class="btn btn-outline-primary" id="'+ responseJson.id_colonne +'" onClick="prepUpdate(this.parentElement)">Update</a>';
+    // html += '<a href="#" class="btn btn-outline-danger" id="'+ responseJson.id_colonne +'" onClick="deleteTask(this)">Delete</a>';
+    // html += '</div>';
+    // html += '</div>';
    
-    element.innerHTML += html
+    // element.innerHTML += html
 }
 
 /**
